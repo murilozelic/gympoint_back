@@ -14,7 +14,7 @@ class GymPlanController {
     const schema = Yup.object().shape({
       title: Yup.string()
         .required()
-        .min(6),
+        .min(3),
       duration: Yup.number()
         .required()
         .positive(),
@@ -27,6 +27,8 @@ class GymPlanController {
       return res.status(400).json({ error: 'Validation fails' });
     }
 
+    // Validation is OK
+
     const { title } = req.body;
 
     const planExists = await GymPlan.findOne({ where: { title } });
@@ -38,9 +40,53 @@ class GymPlanController {
     const newPlan = await GymPlan.create(req.body);
 
     return res.json({
-      message: `Gym Plan ${title} created succesfully`,
+      message: `Gym Plan '${title}' created succesfully`,
       newPlan,
     });
+  }
+
+  async update(req, res) {
+    const schema = Yup.object().shape({
+      title: Yup.string().min(3),
+      duration: Yup.number().positive(),
+      price: Yup.number().positive(),
+    });
+
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Validation fails' });
+    }
+
+    const gymPlan = await GymPlan.findByPk(req.params.id);
+
+    if (!gymPlan) {
+      return res.status(400).json({
+        error: 'This plan does not exists.',
+      });
+    }
+
+    await gymPlan.update(req.body);
+
+    return res.json({
+      message: `Plan updated successfully.`,
+      gymPlan,
+    });
+  }
+
+  async delete(req, res) {
+    const gymPlan = await GymPlan.findByPk(req.params.id);
+
+    if (!gymPlan) {
+      return res.status(400).json({
+        error: 'This plan does not exists.',
+      });
+    }
+
+    try {
+      await gymPlan.destroy();
+      return res.json({ status: `Gym Plan '${gymPlan.title}' deleted` });
+    } catch (err) {
+      return res.json({ error: 'Error deleting plan.', err });
+    }
   }
 }
 

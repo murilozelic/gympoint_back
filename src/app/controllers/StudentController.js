@@ -85,21 +85,7 @@ class StudentController {
   }
 
   async delete(req, res) {
-    const schema = Yup.object().shape({
-      email: Yup.string()
-        .email()
-        .required(),
-    });
-
-    schema.validate(req.body).catch(err => {
-      return res.status(400).json({ msg: `Error : ${err.errors}` });
-    });
-
-    const student = await Student.findOne({
-      where: { email: req.body.email },
-    });
-
-    // const { name, email } = student;
+    const student = await Student.findByPk(req.params.id);
 
     if (!student) {
       return res.status(200).json({ error: 'Student does not exists.' });
@@ -107,7 +93,7 @@ class StudentController {
 
     try {
       await student.destroy();
-      return res.json({ status: `Student ${student.email} deleted` });
+      return res.json({ status: `Student "${student.name}" deleted` });
     } catch (err) {
       return res.json({ error: 'Error deleting user.', err });
     }
