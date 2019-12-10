@@ -7,6 +7,12 @@ class GymPlan extends Model {
         title: Sequelize.STRING,
         duration: Sequelize.INTEGER,
         price: Sequelize.INTEGER,
+        total_price: {
+          type: Sequelize.VIRTUAL,
+          get() {
+            return this.duration * this.price;
+          },
+        },
       },
       {
         sequelize,

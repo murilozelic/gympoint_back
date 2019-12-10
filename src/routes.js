@@ -27,6 +27,9 @@ routes.post('/gymplans', GymPlanController.store);
 routes.delete('/gymplans/:id', GymPlanController.delete);
 routes.put('/gymplans/:id', GymPlanController.update);
 
+routes.get('/enrollments', EnrollmentController.index);
 routes.post('/enrollments', EnrollmentController.store);
+routes.put('/enrollments/:id', EnrollmentController.update);
+routes.delete('/enrollments/:id', EnrollmentController.delete);
 
 export default routes;
