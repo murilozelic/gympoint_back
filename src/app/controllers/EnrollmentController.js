@@ -4,6 +4,9 @@ import Student from '../models/Student';
 import GymPlan from '../models/GymPlan';
 import Enrollment from '../models/Enrollment';
 
+import EnrollmentMail from '../jobs/EnrollmentMail';
+import Queue from '../../lib/Queue';
+
 class EnrollmentController {
   async index(req, res) {
     const enrollments = await Enrollment.findAll({
@@ -72,11 +75,11 @@ class EnrollmentController {
      * Student found! Check if has an ongoing plan
      */
 
-    const enrollment = await Enrollment.findOne({
+    const isEnrolled = await Enrollment.findOne({
       where: { student_id },
     });
 
-    if (enrollment && enrollment.is_active) {
+    if (isEnrolled && isEnrolled.is_active) {
       return res
         .status(400)
         .json({ error: 'This student has an active plan.' });
@@ -94,7 +97,24 @@ class EnrollmentController {
       price,
     });
 
-    return res.json(newEnrollment);
+    const enrollment = await Enrollment.findByPk(newEnrollment.id, {
+      include: [
+        {
+          model: Student,
+          attributes: ['name', 'email'],
+        },
+        {
+          model: GymPlan,
+          attributes: ['title'],
+        },
+      ],
+    });
+
+    await Queue.add(EnrollmentMail.key, {
+      enrollment,
+    });
+
+    return res.json(enrollment);
   }
 
   async update(req, res) {
