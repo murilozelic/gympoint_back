@@ -1,0 +1,4 @@
+Adicionar envio de e-mail para estudante quando pergunta for respondida
+
+Verificar se a pergunta ja foi respondida antes de tentar responder novamente
+(GymHelpOrderController)
