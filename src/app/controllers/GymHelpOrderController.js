@@ -1,5 +1,8 @@
 import * as Yup from 'yup';
 import Order from '../schemas/Order';
+import Queue from '../../lib/Queue';
+import OrderMail from '../jobs/OrderMail';
+import Student from '../models/Student';
 
 class GymHelpOrderController {
   async index(req, res) {
@@ -31,16 +34,25 @@ class GymHelpOrderController {
 
     // Adicionar verificacao se a pergunta ja foi respondida
 
-    const question = await Order.findByIdAndUpdate(
-      req.params.id,
-      {
-        answer,
-        answer_at: new Date(),
-      },
-      { new: true }
-    );
+    const order = await Order.findById(req.params.id);
 
-    return res.json(question);
+    if (order.answer) {
+      return res.json({ error: 'This question was already answered.' });
+    }
+
+    order.answer = answer;
+    order.answer_at = new Date();
+
+    await order.save();
+
+    const student = await Student.findByPk(order.student_id);
+
+    await Queue.add(OrderMail.key, {
+      order,
+      student,
+    });
+
+    return res.json(order);
   }
 }
 

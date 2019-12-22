@@ -48,12 +48,12 @@ class StudentHelpOrderController {
 
     const { question } = req.body;
 
-    const newQuestion = await Order.create({
+    const order = await Order.create({
       student_id: student.id,
       question,
     });
 
-    return res.json(newQuestion);
+    return res.json(order);
   }
 }
 
