@@ -1,4 +1,5 @@
 import * as Yup from 'yup';
+import { Op } from 'sequelize';
 import Student from '../models/Student';
 
 class StudentController {
@@ -73,6 +74,27 @@ class StudentController {
   }
 
   async index(req, res) {
+    const { student } = req.query;
+
+    // Foi passado valor de student no query
+
+    if (student) {
+      const foundStudents = await Student.findAll({
+        where: { name: { [Op.iLike]: `${student}%` } },
+        attributes: { exclude: ['id', 'createdAt', 'updatedAt'] },
+      });
+
+      if (foundStudents.length === 0) {
+        res.json({
+          status: `There are no users with the name ${student}`,
+        });
+      }
+
+      return res.json(foundStudents);
+    }
+
+    // Nao foi passado valor de student no query, retorna todos students
+
     const students = await Student.findAll({
       attributes: { exclude: ['id', 'createdAt', 'updatedAt'] },
     });
