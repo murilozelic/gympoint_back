@@ -40,9 +40,7 @@ class StudentController {
 
   async update(req, res) {
     const schema = Yup.object().shape({
-      email: Yup.string()
-        .email()
-        .required(),
+      email: Yup.string().email(),
       age: Yup.number()
         .integer()
         .moreThan(16), // idade minima para fazer academia!
@@ -54,9 +52,7 @@ class StudentController {
       return res.status(400).json({ msg: `Error : ${err.errors}` });
     });
 
-    const student = await Student.findOne({
-      where: { email: req.body.email },
-    });
+    const student = await Student.findByPk(req.params.id);
 
     // const { name, email } = student;
 
@@ -96,7 +92,7 @@ class StudentController {
     // Nao foi passado valor de student no query, retorna todos students
 
     const students = await Student.findAll({
-      attributes: { exclude: ['id', 'createdAt', 'updatedAt'] },
+      attributes: { exclude: ['createdAt', 'updatedAt'] },
     });
 
     if (students.length === 0) {
