@@ -12,7 +12,7 @@ class StudentController {
       age: Yup.number()
         .integer()
         .required()
-        .moreThan(16), // idade minima para fazer academia!
+        .moreThan(16, 'Idade minima: 16 anos'), // idade minima para fazer academia!
       weight: Yup.number()
         .positive()
         .required(),
@@ -22,20 +22,28 @@ class StudentController {
     });
 
     schema.validate(req.body).catch(err => {
-      return res.status(400).json({ msg: `Error : ${err.errors}` });
+      return res.status(400).json({ error: ` ${err.errors}` });
     });
 
-    const studentExists = await Student.findOne({
-      where: { email: req.body.email },
+    schema.validate(req.body).then(async newStudent => {
+      const studentExists = await Student.findOne({
+        where: { email: newStudent.email },
+      });
+
+      if (studentExists) {
+        return res.status(200).json({ error: 'Student already exists.' });
+      }
+
+      const { id } = await Student.create(newStudent);
+
+      return res.json({
+        message: `Student ${newStudent.name} created succesfully`,
+        newStudent: {
+          ...newStudent,
+          id,
+        },
+      });
     });
-
-    if (studentExists) {
-      return res.status(400).json({ error: 'Student already exists.' });
-    }
-
-    const { name } = await Student.create(req.body);
-
-    return res.json({ message: `Student ${name} created succesfully` });
   }
 
   async update(req, res) {
@@ -77,12 +85,12 @@ class StudentController {
     if (student) {
       const foundStudents = await Student.findAll({
         where: { name: { [Op.iLike]: `${student}%` } },
-        attributes: { exclude: ['id', 'createdAt', 'updatedAt'] },
+        attributes: { exclude: ['createdAt', 'updatedAt'] },
       });
 
       if (foundStudents.length === 0) {
         res.json({
-          status: `There are no users with the name ${student}`,
+          status: `There are no users that starts with the name ${student}`,
         });
       }
 
@@ -106,14 +114,16 @@ class StudentController {
     const student = await Student.findByPk(req.params.id);
 
     if (!student) {
-      return res.status(200).json({ error: 'Student does not exists.' });
+      return res.status(400).json({ error: 'Student does not exists.' });
     }
 
     try {
       await student.destroy();
-      return res.json({ status: `Student "${student.name}" deleted` });
+      return res
+        .status(200)
+        .json({ status: `Student "${student.name}" deleted` });
     } catch (err) {
-      return res.json({ error: 'Error deleting user.', err });
+      return res.status(200).json({ error: 'Error deleting user.', err });
     }
   }
 }
