@@ -4,8 +4,13 @@ import GymPlan from '../models/GymPlan';
 class GymPlanController {
   async index(req, res) {
     const plans = await GymPlan.findAll({
-      attributes: ['title', 'duration', 'price'],
+      attributes: ['id', 'title', 'duration', 'price', 'total_price'],
+      order: [['duration', 'ASC']],
     });
+
+    if (!plans) {
+      return res.json({ status: 'There are no plans registered' });
+    }
 
     return res.json(plans);
   }
@@ -83,7 +88,9 @@ class GymPlanController {
 
     try {
       await gymPlan.destroy();
-      return res.json({ status: `Gym Plan '${gymPlan.title}' deleted` });
+      return res.status(200).json({
+        status: `Gym Plan '${gymPlan.title}' deleted`,
+      });
     } catch (err) {
       return res.json({ error: 'Error deleting plan.', err });
     }
