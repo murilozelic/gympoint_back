@@ -10,15 +10,15 @@ module.exports = {
       student_id: {
         type: Sequelize.INTEGER,
         references: { model: 'students', key: 'id' },
-        onUpdate: 'CASCADE',
-        onDelete: 'SET NULL',
+        onUpdate: 'RESTRICT',
+        onDelete: 'RESTRICT',
         allowNull: true,
       },
       plan_id: {
         type: Sequelize.INTEGER,
         references: { model: 'gym_plans', key: 'id' },
-        onUpdate: 'CASCADE',
-        onDelete: 'SET NULL',
+        onUpdate: 'RESTRICT',
+        onDelete: 'RESTRICT',
         allowNull: true,
       },
       start_date: {
