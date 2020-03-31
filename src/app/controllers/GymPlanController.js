@@ -60,8 +60,9 @@ class GymPlanController {
     if (!(await schema.isValid(req.body))) {
       return res.status(400).json({ error: 'Validation fails' });
     }
+    const { id } = req.params;
 
-    const gymPlan = await GymPlan.findByPk(req.params.id);
+    const gymPlan = await GymPlan.findByPk(id);
 
     if (!gymPlan) {
       return res.status(400).json({
@@ -71,11 +72,11 @@ class GymPlanController {
 
     const { title } = req.body;
 
-    const findDuplicateGymPlanTitle = await GymPlan.findAll({
+    const duplicateGymPlanTitle = await GymPlan.findOne({
       where: { title },
     });
 
-    if (findDuplicateGymPlanTitle.length > 1) {
+    if (duplicateGymPlanTitle && duplicateGymPlanTitle.id !== Number(id)) {
       return res.status(400).json({
         error: 'This name is already being used.',
       });
