@@ -69,6 +69,18 @@ class GymPlanController {
       });
     }
 
+    const { title } = req.body;
+
+    const findDuplicateGymPlanTitle = await GymPlan.findAll({
+      where: { title },
+    });
+
+    if (findDuplicateGymPlanTitle.length > 1) {
+      return res.status(400).json({
+        error: 'This name is already being used.',
+      });
+    }
+
     await gymPlan.update(req.body);
 
     return res.json({
