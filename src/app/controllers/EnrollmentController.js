@@ -1,5 +1,5 @@
 import * as Yup from 'yup';
-import { parseISO, isBefore, addMonths } from 'date-fns';
+import { parseISO, isBefore, addMonths, startOfDay, isAfter } from 'date-fns';
 import Student from '../models/Student';
 import GymPlan from '../models/GymPlan';
 import Enrollment from '../models/Enrollment';
@@ -9,16 +9,45 @@ import Queue from '../../lib/Queue';
 
 class EnrollmentController {
   async index(req, res) {
+    const { id } = req.query;
+
+    // Foi passado valor de student no query
+
+    if (id) {
+      const foundEnrollment = await Enrollment.findOne({
+        where: { id },
+        attributes: ['id', 'price', 'start_date', 'end_date', 'active'],
+        include: [
+          {
+            model: Student,
+            attributes: ['id', 'name', 'email', 'age'],
+          },
+          {
+            model: GymPlan,
+            attributes: ['id', 'title', 'duration', 'price', 'total_price'],
+          },
+        ],
+      });
+
+      if (foundEnrollment.length === 0) {
+        res.status(400).json({
+          status: 'There are no enrollments with this id',
+        });
+      }
+
+      return res.json(foundEnrollment);
+    }
+
     const enrollments = await Enrollment.findAll({
       attributes: ['id', 'price', 'start_date', 'end_date', 'active'],
       include: [
         {
           model: Student,
-          attributes: ['name', 'email', 'age'],
+          attributes: ['id', 'name', 'email', 'age'],
         },
         {
           model: GymPlan,
-          attributes: ['title', 'duration', 'price', 'total_price'],
+          attributes: ['id', 'title', 'duration', 'price', 'total_price'],
         },
       ],
     });
@@ -63,7 +92,7 @@ class EnrollmentController {
      * Check for past dates
      */
 
-    if (isBefore(parseISO(start_date), new Date())) {
+    if (isBefore(parseISO(start_date), startOfDay(new Date()))) {
       return res
         .status(400)
         .json({ error: 'You cannot start an enrollment with a past date' });
@@ -79,10 +108,18 @@ class EnrollmentController {
       where: { student_id },
     });
 
-    if (isEnrolled && isEnrolled.is_active) {
+    if (isEnrolled && isEnrolled.active) {
       return res
         .status(400)
         .json({ error: 'This student has an active plan.' });
+    }
+
+    /* Check whether a student has a plan to start */
+
+    if (isEnrolled && isAfter(isEnrolled.start_date, startOfDay(new Date()))) {
+      return res.status(400).json({
+        error: 'This student is already enrolled in a plan to start.',
+      });
     }
 
     const price = plan.duration * plan.price;
@@ -101,11 +138,11 @@ class EnrollmentController {
       include: [
         {
           model: Student,
-          attributes: ['name', 'email'],
+          attributes: ['id', 'name', 'email', 'age'],
         },
         {
           model: GymPlan,
-          attributes: ['title'],
+          attributes: ['id', 'title', 'duration', 'price', 'total_price'],
         },
       ],
     });
@@ -122,6 +159,7 @@ class EnrollmentController {
      *
       The only thing that can be updated is the plan (plan_id)
       User has to pass the enrollment to update and the new plan id.
+      Start_date cannot be eddited
      */
 
     const schema = Yup.object().shape({
@@ -136,6 +174,16 @@ class EnrollmentController {
 
     const enrollment = await Enrollment.findOne({
       where: { id: req.params.id },
+      include: [
+        {
+          model: Student,
+          attributes: ['id', 'name', 'email', 'age'],
+        },
+        {
+          model: GymPlan,
+          attributes: ['id', 'title', 'duration', 'price', 'total_price'],
+        },
+      ],
     });
 
     if (!enrollment) {
@@ -170,6 +218,7 @@ class EnrollmentController {
         end_date: newEndDate,
         price: newPrice,
       });
+
       return res.json(updatedEnrollment);
     } catch (err) {
       return res.json({ error: 'Error updating enrollment.', err });

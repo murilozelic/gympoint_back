@@ -3,16 +3,21 @@ import GymPlan from '../models/GymPlan';
 
 class GymPlanController {
   async index(req, res) {
-    const plans = await GymPlan.findAll({
+    const { page = 1, resultsPerPage } = req.query;
+    // Usando findAndCountAll é possível encontrar as entradas com os parametros passados
+    // e ao mesmo tempo contar o numero total de entradas para fazer a paginação
+    const { count, rows } = await GymPlan.findAndCountAll({
       attributes: ['id', 'title', 'duration', 'price', 'total_price'],
-      order: [['duration', 'ASC']],
+      order: ['duration', 'title'],
+      offset: (page - 1) * (resultsPerPage || 0),
+      limit: resultsPerPage || null,
     });
 
-    if (!plans) {
+    /* if (!plans) {
       return res.json({ status: 'There are no plans registered' });
-    }
+    } */
 
-    return res.json(plans);
+    return res.json({ plans: rows, totalPlans: count });
   }
 
   async store(req, res) {
@@ -72,14 +77,16 @@ class GymPlanController {
 
     const { title } = req.body;
 
-    const duplicateGymPlanTitle = await GymPlan.findOne({
-      where: { title },
-    });
-
-    if (duplicateGymPlanTitle && duplicateGymPlanTitle.id !== Number(id)) {
-      return res.status(400).json({
-        error: 'This name is already being used.',
+    if (title) {
+      const duplicateGymPlanTitle = await GymPlan.findOne({
+        where: { title },
       });
+
+      if (duplicateGymPlanTitle && duplicateGymPlanTitle.id !== Number(id)) {
+        return res.status(400).json({
+          error: 'This name is already being used.',
+        });
+      }
     }
 
     await gymPlan.update(req.body);
@@ -105,7 +112,7 @@ class GymPlanController {
         status: `Gym Plan '${gymPlan.title}' deleted`,
       });
     } catch (err) {
-      return res.json({ error: 'Error deleting plan.', err });
+      return res.status(400).json({ /* error: 'Error deleting plan.', */ err });
     }
   }
 }

@@ -3,6 +3,39 @@ import { Op } from 'sequelize';
 import Student from '../models/Student';
 
 class StudentController {
+  async index(req, res) {
+    const { student } = req.query;
+
+    // Foi passado valor de student no query
+
+    if (student) {
+      const foundStudents = await Student.findAll({
+        where: { name: { [Op.iLike]: `${student}%` } },
+        attributes: { exclude: ['createdAt', 'updatedAt'] },
+      });
+
+      if (foundStudents.length === 0) {
+        res.json({
+          status: `There are no users that starts with the name ${student}`,
+        });
+      }
+
+      return res.json(foundStudents);
+    }
+
+    // Nao foi passado valor de student no query, retorna todos students
+
+    const students = await Student.findAll({
+      attributes: { exclude: ['createdAt', 'updatedAt'] },
+    });
+
+    if (students.length === 0) {
+      return res.json({ status: 'There are no users registered' });
+    }
+
+    return res.json(students);
+  }
+
   async store(req, res) {
     const schema = Yup.object().shape({
       name: Yup.string().required(),
@@ -75,39 +108,6 @@ class StudentController {
     } catch (err) {
       return res.json({ error: 'Error updating user.', err });
     }
-  }
-
-  async index(req, res) {
-    const { student } = req.query;
-
-    // Foi passado valor de student no query
-
-    if (student) {
-      const foundStudents = await Student.findAll({
-        where: { name: { [Op.iLike]: `${student}%` } },
-        attributes: { exclude: ['createdAt', 'updatedAt'] },
-      });
-
-      if (foundStudents.length === 0) {
-        res.json({
-          status: `There are no users that starts with the name ${student}`,
-        });
-      }
-
-      return res.json(foundStudents);
-    }
-
-    // Nao foi passado valor de student no query, retorna todos students
-
-    const students = await Student.findAll({
-      attributes: { exclude: ['createdAt', 'updatedAt'] },
-    });
-
-    if (students.length === 0) {
-      return res.json({ status: 'There are no users registered' });
-    }
-
-    return res.json(students);
   }
 
   async delete(req, res) {
