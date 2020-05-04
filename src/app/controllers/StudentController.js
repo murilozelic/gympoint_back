@@ -5,6 +5,7 @@ import Student from '../models/Student';
 class StudentController {
   async index(req, res) {
     const { student } = req.query;
+    const { id } = req.query;
 
     // Foi passado valor de student no query
 
@@ -21,6 +22,22 @@ class StudentController {
       }
 
       return res.json(foundStudents);
+    }
+
+    // Foi passado id no query
+
+    if (id) {
+      const foundStudent = await Student.findByPk(Number(id), {
+        attributes: { exclude: ['createdAt', 'updatedAt'] },
+      });
+
+      // const { name, email } = student;
+
+      if (!foundStudent) {
+        return res.status(400).json({ error: 'Student does not exists.' });
+      }
+
+      return res.status(200).json(foundStudent);
     }
 
     // Nao foi passado valor de student no query, retorna todos students
