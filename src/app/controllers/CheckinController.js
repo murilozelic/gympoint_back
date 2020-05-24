@@ -26,11 +26,14 @@ class CheckinController {
     const findCheckin = await Checkin.find({
       student_id: student.id,
     })
-      .sort({ createdAt: 'desc' })
+      .sort({ createdAt: 'asc' })
       .limit(20);
 
     const checkin = findCheckin.map(check_in => {
-      return { student: check_in.student_id, checkin_date: check_in.createdAt };
+      return {
+        id: check_in.id,
+        date: check_in.createdAt,
+      };
     });
 
     return res.json(checkin);
@@ -79,7 +82,12 @@ class CheckinController {
       student_id: student.id,
     });
 
-    return res.json(checkin);
+    const newCheckin = {
+      id: checkin.id,
+      date: checkin.createdAt,
+    };
+
+    return res.json(newCheckin);
   }
 }
 

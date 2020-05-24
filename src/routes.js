@@ -3,6 +3,7 @@ import { Router } from 'express';
 // import UserController from './app/controllers/UserController';
 import SessionController from './app/controllers/SessionController';
 import StudentController from './app/controllers/StudentController';
+import StudentSessionController from './app/controllers/StudentSessionController';
 import GymPlanController from './app/controllers/GymPlanController';
 import EnrollmentController from './app/controllers/EnrollmentController';
 import CheckinController from './app/controllers/CheckinController';
@@ -16,6 +17,8 @@ const routes = new Router();
 // Aplicacao nao ira possuir user controller
 // routes.post('/users', UserController.store);
 routes.post('/sessions', SessionController.store);
+
+routes.get('/student/:id', StudentSessionController.index);
 
 routes.get('/students/:id/checkins', CheckinController.index);
 routes.post('/students/:id/checkins', CheckinController.store);
